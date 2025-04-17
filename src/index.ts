@@ -8,6 +8,10 @@ import {
   McpError,
 } from '@modelcontextprotocol/sdk/types.js';
 import axios from 'axios';
+import dotenv from 'dotenv';
+
+// Load environment variables from .env file
+dotenv.config();
 
 // Read configuration from environment variables
 const GITLAB_TOKEN = process.env.GITLAB_PERSONAL_ACCESS_TOKEN;
