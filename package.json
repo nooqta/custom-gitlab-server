@@ -1,12 +1,29 @@
 {
-  "name": "noqta-gitlab-server",
-  "version": "0.1.0",
-  "description": "A Model Context Protocol server",
-  "private": true,
+  "name": "@nooqta/gitlab-mcp-server",
+  "version": "1.0.0",
+  "description": "An MCP server providing tools to interact with the GitLab API.",
+  "private": false,
   "type": "module",
   "bin": {
-    "noqta-gitlab-server": "./build/index.js"
+    "@nooqta/gitlab-mcp-server": "./build/index.js"
   },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nooqta/custom-gitlab-server.git"
+  },
+  "bugs": {
+    "url": "https://github.com/nooqta/custom-gitlab-server/issues"
+  },
+  "homepage": "https://github.com/nooqta/custom-gitlab-server#readme",
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "gitlab",
+    "api",
+    "server",
+    "ai",
+    "llm"
+  ],
   "files": [
     "build"
   ],
