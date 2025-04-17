@@ -103,11 +103,11 @@ To use this server with an MCP client like Claude Desktop, add its configuration
   "mcpServers": {
     "@nooqta/gitlab-mcp-server": {
       "command": "npx",
-      "args": ["@nooqta/gitlab-mcp-server"],
-      "env": {
-        "GITLAB_PERSONAL_ACCESS_TOKEN": "...",
-        "GITLAB_API_URL": "..."
-      }
+      "args": ["@nooqta/gitlab-mcp-server"]
+      // IMPORTANT: Environment variables (GITLAB_PERSONAL_ACCESS_TOKEN, GITLAB_API_URL)
+      // must be set in the environment where the client runs this npx command,
+      // or loaded from a .env file in the directory where the client runs npx.
+      // DO NOT add an "env" block here with secrets.
     }
   }
   // Potentially other configurations...
