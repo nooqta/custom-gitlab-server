@@ -103,11 +103,11 @@ To use this server with an MCP client like Claude Desktop, add its configuration
   "mcpServers": {
     "@nooqta/gitlab-mcp-server": {
       "command": "npx",
-      "args": ["@nooqta/gitlab-mcp-server"]
-      // IMPORTANT: Environment variables (GITLAB_PERSONAL_ACCESS_TOKEN, GITLAB_API_URL)
-      // must be set in the environment where the client runs this npx command,
-      // or loaded from a .env file in the directory where the client runs npx.
-      // DO NOT add an "env" block here with secrets.
+      "args": ["-y", "@nooqta/gitlab-mcp-server"],
+      "env": {
+        "GITLAB_PERSONAL_ACCESS_TOKEN": "...",
+        "GITLAB_API_URL": "..."
+      }
     }
   }
   // Potentially other configurations...
@@ -121,13 +121,14 @@ To use this server with an MCP client like Claude Desktop, add its configuration
   "mcpServers": {
     "@nooqta/gitlab-mcp-server": {
       // Use the package name for consistency, even if running locally
-      "command": "/full/path/to/your/custom-gitlab-server/build/index.js"
-      // Note: The server reads secrets from the .env file in its own project directory.
-      // Ensure the .env file is correctly configured in the cloned repository.
-      // DO NOT add secrets directly to this configuration file using an "env" block.
+      "command": "/full/path/to/your/custom-gitlab-server/build/index.js",
+      "env": {
+        "GITLAB_PERSONAL_ACCESS_TOKEN": "...",
+        "GITLAB_API_URL": "..."
+      }
     }
+    // Potentially other configurations...
   }
-  // Potentially other configurations...
 }
 ```
 
