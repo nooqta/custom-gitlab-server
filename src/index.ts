@@ -125,8 +125,9 @@ const isValidGetIssueArgs = (args: any): args is { project_id: number | string; 
 const isValidCreateNoteArgs = (args: any): args is { project_id: number | string; issue_iid: number; body: string } =>
     typeof args === 'object' && args !== null && (typeof args.project_id === 'number' || typeof args.project_id === 'string') && typeof args.issue_iid === 'number' && typeof args.body === 'string';
 
-const isValidUpdateIssueArgs = (args: any): args is { project_id: number | string; issue_iid: number; description?: string; labels?: string; add_labels?: string; remove_labels?: string; state_event?: 'close' | 'reopen' } =>
+const isValidUpdateIssueArgs = (args: any): args is { project_id: number | string; issue_iid: number; title?: string; description?: string; labels?: string; add_labels?: string; remove_labels?: string; state_event?: 'close' | 'reopen' } =>
     typeof args === 'object' && args !== null && (typeof args.project_id === 'number' || typeof args.project_id === 'string') && typeof args.issue_iid === 'number' &&
+    (args.title === undefined || typeof args.title === 'string') &&
     (args.description === undefined || typeof args.description === 'string') &&
     (args.labels === undefined || typeof args.labels === 'string') &&
     (args.add_labels === undefined || typeof args.add_labels === 'string') &&
@@ -176,6 +177,17 @@ const isValidCreateRepositoryArgs = (args: any): args is { name: string; group_n
     (args.description === undefined || typeof args.description === 'string') &&
     (args.visibility === undefined || ['private', 'internal', 'public'].includes(args.visibility)) &&
     (args.initialize_with_readme === undefined || typeof args.initialize_with_readme === 'boolean');
+
+const isValidBulkUpdateIssuesArgs = (args: any): args is { project_id: number | string; iids: number[]; title?: string; description?: string; labels?: string; add_labels?: string; remove_labels?: string; state_event?: 'close' | 'reopen' } =>
+    typeof args === 'object' && args !== null &&
+    (typeof args.project_id === 'number' || typeof args.project_id === 'string') &&
+    Array.isArray(args.iids) && args.iids.every((iid: any) => typeof iid === 'number') &&
+    (args.title === undefined || typeof args.title === 'string') &&
+    (args.description === undefined || typeof args.description === 'string') &&
+    (args.labels === undefined || typeof args.labels === 'string') &&
+    (args.add_labels === undefined || typeof args.add_labels === 'string') &&
+    (args.remove_labels === undefined || typeof args.remove_labels === 'string') &&
+    (args.state_event === undefined || ['close', 'reopen'].includes(args.state_event));
 
 
 class CustomGitLabServer {
@@ -312,13 +324,14 @@ class CustomGitLabServer {
         },
         {
             name: 'update_issue',
-            description: 'Update attributes of an issue (e.g., description, labels, state).',
+            description: 'Update attributes of an issue (e.g., title, description, labels, state).',
             inputSchema: {
                 type: 'object',
                 properties: {
                     project_id: { type: ['number', 'string'], description: 'The ID or URL-encoded path of the project' },
                     issue_iid: { type: 'number', description: 'The internal ID (IID) of the issue' },
-                    description: { type: 'string', description: 'New issue description (can include Markdown checklists)' }, // Modified description
+                    title: { type: 'string', description: 'New title for the issue' },
+                    description: { type: 'string', description: 'New issue description (can include Markdown checklists)' },
                     labels: { type: 'string', description: 'Comma-separated list of label names to set (replaces existing)' },
                     add_labels: { type: 'string', description: 'Comma-separated list of label names to add' },
                     remove_labels: { type: 'string', description: 'Comma-separated list of label names to remove' },
@@ -429,6 +442,24 @@ class CustomGitLabServer {
                 required: ['name'],
             },
         },
+        {
+            name: 'bulk_update_issues',
+            description: 'Update attributes of multiple issues in a project at once.',
+            inputSchema: {
+                type: 'object',
+                properties: {
+                    project_id: { type: ['number', 'string'], description: 'The ID or URL-encoded path of the project' },
+                    iids: { type: 'array', items: { type: 'number' }, description: 'Array of internal IDs (IIDs) of the issues to update' },
+                    title: { type: 'string', description: 'New title for the issues' },
+                    description: { type: 'string', description: 'New description for the issues' },
+                    labels: { type: 'string', description: 'Comma-separated list of label names to set (replaces existing)' },
+                    add_labels: { type: 'string', description: 'Comma-separated list of label names to add' },
+                    remove_labels: { type: 'string', description: 'Comma-separated list of label names to remove' },
+                    state_event: { type: 'string', enum: ['close', 'reopen'], description: 'Event to change issue state' },
+                },
+                required: ['project_id', 'iids'],
+            },
+        },
       ],
     }));
 
@@ -465,6 +496,8 @@ class CustomGitLabServer {
         // Case for the new create_repository tool
         case 'create_repository':
             return this.handleCreateRepository(request.params.arguments);
+        case 'bulk_update_issues':
+            return this.handleBulkUpdateIssues(request.params.arguments);
         default:
           throw new McpError(
             ErrorCode.MethodNotFound,
@@ -879,6 +912,29 @@ class CustomGitLabServer {
           };
       } catch (error) {
           return this.handleGitLabApiError(error, 'create_merge_request_note');
+      }
+  }
+
+  // --- Tool Implementation: bulk_update_issues ---
+  private async handleBulkUpdateIssues(args: any) {
+      if (!isValidBulkUpdateIssuesArgs(args)) {
+          throw new McpError(ErrorCode.InvalidParams, 'Invalid arguments for bulk_update_issues');
+      }
+      const { project_id, iids, ...updateData } = args;
+      const projectIdEncoded = encodeURIComponent(project_id.toString());
+
+      try {
+          console.error(`Bulk updating issues ${iids.join(', ')} in project ${project_id}`);
+          const response = await this.axiosInstance.put(`/projects/${projectIdEncoded}/issues`, {
+              ...updateData,
+              issue_iids: iids,
+          });
+          console.error(`GitLab API response status: ${response.status}`);
+          return {
+              content: [{ type: 'text', text: JSON.stringify(response.data, null, 2) }],
+          };
+      } catch (error) {
+          return this.handleGitLabApiError(error, 'bulk_update_issues');
       }
   }
 

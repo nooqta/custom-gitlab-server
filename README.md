@@ -14,7 +14,8 @@ This server exposes the following tools for use by MCP clients:
 - **`get_my_issues`**: List issues assigned to or created by the authenticated user across all projects (filterable by state, scope).
 - **`get_issue`**: Get details of a specific issue within a project by its IID.
 - **`create_issue_note`**: Add a comment (note) to a specific issue.
-- **`update_issue`**: Update attributes of an issue (e.g., description, labels, state).
+- **`update_issue`**: Update attributes of an issue (e.g., title, description, labels, state).
+- **`bulk_update_issues`**: Update attributes of multiple issues in a project at once.
 - **`create_branch`**: Create a new branch in a project from a specified ref.
 - **`create_issue`**: Create a new issue in a project.
 - **`create_merge_request`**: Create a new merge request.
